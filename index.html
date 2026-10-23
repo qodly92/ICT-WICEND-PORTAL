@@ -1,421 +1,168 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>ICT Portal - Corporate Glassmorphism PWA</title>
-    
-    <!-- Dependencies via CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-    <!-- PWA Manifest Inline Data URI -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIklDVCBQb3J0YWwiLAogICJzaG9ydF9uYW1lIjogIklDVCBQb3J0YWwiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiMwYzViNWIiLAogICJpY29ucyI6IFtdCn0=">
-
-    <style>
-        :root {
-            --bg: #f4f7fe;
-            --card-bg: rgba(255, 255, 255, 0.75);
-            --card-border: rgba(255, 255, 255, 0.8);
-            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-            --tx: #2b3674;
-            --mu: #a3edd9;
-            --mu-text: #707ebe;
-            --bd: #e0e5f2;
-            --pr: #0c5b5b;
-            --tl: #208a8a;
-            --ac: #ffcc00;
-            --er: #ee5d50;
-            --gn: #01b574;
-            --bl: #3965ff;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
-            color: var(--tx);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Blogger Full Screen Overlay Fix */
-        #blogger-wrapper-portal {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 999999;
-            background: var(--bg);
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* Layout Architecture */
-        .app-container { display: flex; width: 100vw; height: 100vh; }
-        
-        /* Desktop Fixed Glass Sidebar */
-        .sidebar {
-            width: 270px;
-            background: rgba(12, 91, 91, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            padding: 20px 14px;
-            overflow-y: auto;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-        }
-
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        /* Glassmorphism Cards */
-        .glass-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--card-border);
-            box-shadow: var(--glass-shadow);
-            border-radius: 16px;
-            padding: 20px;
-        }
-
-        /* Responsive Layout Switcher */
-        .bottom-nav { display: none; }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: 0; top: 0; bottom: 0;
-                z-index: 100;
-                transform: translateX(-100%);
-            }
-            .sidebar.active { transform: translateX(0); }
-            .main-content { padding: 16px; padding-bottom: 80px; }
-            
-            /* Mobile Bottom Navigation Bar */
-            .bottom-nav {
-                display: flex;
-                position: fixed;
-                bottom: 12px; left: 12px; right: 12px;
-                height: 60px;
-                background: rgba(12, 91, 91, 0.9);
-                backdrop-filter: blur(16px);
-                border-radius: 30px;
-                justify-content: space-around;
-                align-items: center;
-                z-index: 99;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            }
-            .bottom-nav-item {
-                color: #fff;
-                font-size: 20px;
-                text-decoration: none;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                font-size: 10px;
-            }
-        }
-
-        /* Form Controls & Buttons */
-        input, select, textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid var(--bd);
-            background: rgba(255, 255, 255, 0.8);
-            outline: none;
-            font-size: 14px;
-            color: var(--tx);
-            margin-top: 6px;
-        }
-        button {
-            background: var(--pr);
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-gold { background: var(--ac); color: #1b2430; }
-
-        /* Navigation Links */
-        .nav-group-title { font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.6); margin: 16px 0 6px 8px; font-weight: 700; }
-        .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: rgba(255,255,255,0.85); text-decoration: none; cursor: pointer; margin-bottom: 2px; font-size: 13px; }
-        .nav-link:hover, .nav-link.active { background: rgba(255, 255, 255, 0.2); color: #fff; font-weight: 600; }
-
-        /* Tables & Data Grid */
-        .table-responsive { overflow-x: auto; width: 100%; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-        th, td { padding: 12px 14px; border-bottom: 1px solid var(--bd); white-space: nowrap; }
-        th { background: rgba(12, 91, 91, 0.05); color: var(--pr); font-weight: 700; }
-        
-        /* Modal Glass */
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { width: 90%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
-    </style>
-</head>
-<body>
-
-<div id="blogger-wrapper-portal">
-    <div id="app" class="app-container"></div>
-</div>
-
-<script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    // CONFIGURATION SWITCHER
-    const IS_PREVIEW = false; // Set FALSE jika sudah terhubung ke Supabase
-    const SUPABASE_URL = "https://lfvqjqnhrbvtlmjnlgxg.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_BLG77wsLYhetdWIWco7cJQ_-FvgeFMl";
-
-    let supabase = null;
-    if (!IS_PREVIEW) {
-        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    }
-
-    // STATE MANAGEMENT
-    const state = {
-        user: JSON.parse(sessionStorage.getItem('ict_user')) || null,
-        currentView: 'dashboard',
-        dummyData: {
-            profiles: [
-                { id: '1', nama: 'Admin ICT', username: 'admin', role: 'Manajer', nip: '19900101', pass: 'admin123' },
-                { id: '2', nama: 'Staf Multimedia', username: 'staf', role: 'Staf', nip: '19950202', pass: 'staf123' }
-            ],
-            tickets: [
-                { id: '101', tanggal: '2026-10-23', nama: 'Staf Multimedia', kategori: 'IT', judul: 'Koneksi Wi-Fi Ruang Rapat Terputus', prioritas: 'Tinggi', status: 'Open' }
-            ]
-        }
-    };
-
-    // PWA DYNAMIC SERVICE WORKER
-    if ('serviceWorker' in navigator) {
-        const swCode = `
-            self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-            self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-            self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
-        `;
-        const blob = new Blob([swCode], { type: 'text/javascript' });
-        navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
-    }
-
-    // DATABASE AUTO SETUP & INITIALIZER
-    async function autoSetupDatabase() {
-        if (IS_PREVIEW) return;
-        try {
-            const { data, error } = await supabase.from('profiles').select('count', { count: 'exact' });
-            if (error || data[0].count === 0) {
-                console.log("Seeding Database Initial Data...");
-                await supabase.from('profiles').insert([
-                    { nama: 'Super Admin', username: 'admin', role: 'Manajer', nip: '1001', password: 'admin' },
-                    { nama: 'Staf ICT', username: 'staf', role: 'Staf', nip: '1002', password: 'staf' }
-                ]);
-            }
-        } catch (e) {
-            console.error("Auto setup database skipped:", e);
-        }
-    }
-
-    // MAIN RENDER ENGINE
-    function render() {
-        const app = document.getElementById('app');
-        if (!state.user) {
-            app.innerHTML = renderLogin();
-            bindLoginEvents();
-            return;
-        }
-
-        app.innerHTML = `
-            <aside class="sidebar" id="sidebar">
-                <div style="font-weight:800; font-size:18px; text-align:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.2); margin-bottom:15px;">
-                    🏫 ICT PORTAL
-                </div>
-                <div class="nav-group-title">Utama</div>
-                <div class="nav-link ${state.currentView === 'dashboard' ? 'active' : ''}" onclick="window.navigate('dashboard')">📊 Dashboard</div>
-                <div class="nav-link ${state.currentView === 'kpi' ? 'active' : ''}" onclick="window.navigate('kpi')">🎯 KPI ICT</div>
-
-                <div class="nav-group-title">Kepegawaian</div>
-                <div class="nav-link ${state.currentView === 'profil' ? 'active' : ''}" onclick="window.navigate('profil')">🪪 Profile Pegawai</div>
-                <div class="nav-link ${state.currentView === 'absen' ? 'active' : ''}" onclick="window.navigate('absen')">⏰ Kehadiran Harian</div>
-                <div class="nav-link ${state.currentView === 'izin' ? 'active' : ''}" onclick="window.navigate('izin')">📝 Perizinan</div>
-                <div class="nav-link ${state.currentView === 'progr' ? 'active' : ''}" onclick="window.navigate('progr')">🗂️ Program Kerja</div>
-
-                <div class="nav-group-title">Content Framework</div>
-                <div class="nav-link ${state.currentView === 'cplan' ? 'active' : ''}" onclick="window.navigate('cplan')">🗓️ Content Planner</div>
-                <div class="nav-link ${state.currentView === 'sosmed' ? 'active' : ''}" onclick="window.navigate('sosmed')">📈 Analisis Sosmed</div>
-
-                <div class="nav-group-title">Lainnya</div>
-                <div class="nav-link ${state.currentView === 'tiket' ? 'active' : ''}" onclick="window.navigate('tiket')">🛠️ Helpdesk IT</div>
-                <div class="nav-link ${state.currentView === 'set' ? 'active' : ''}" onclick="window.navigate('set')">⚙️ Pengaturan</div>
-                
-                <div style="margin-top:auto; padding-top:15px; border-top:1px solid rgba(255,255,255,0.2);">
-                    <div style="font-size:12px; margin-bottom:6px;">Login: <b>${state.user.nama}</b> (${state.user.role})</div>
-                    <button class="btn-gold" style="width:100%" onclick="window.logout()">Keluar</button>
-                </div>
-            </aside>
-
-            <main class="main-content">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <button onclick="document.getElementById('sidebar').classList.toggle('active')" class="mobile-toggle" style="display:none;">☰ Menu</button>
-                    <h2 style="text-transform:capitalize;">${state.currentView.replace('_', ' ')}</h2>
-                    <span>${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-                ${renderViewContent()}
-            </main>
-
-            <div class="bottom-nav">
-                <a class="bottom-nav-item" onclick="window.navigate('dashboard')">📊<span>Home</span></a>
-                <a class="bottom-nav-item" onclick="window.navigate('absen')">⏰<span>Absen</span></a>
-                <a class="bottom-nav-item" onclick="window.navigate('tiket')">🛠️<span>Helpdesk</span></a>
-                <a class="bottom-nav-item" onclick="window.navigate('profil')">👤<span>Profil</span></a>
-            </div>
-        `;
-    }
-
-    function renderLogin() {
-        return `
-            <div style="display:flex; align-items:center; justify-content:center; width:100vw; height:100vh;">
-                <div class="glass-card" style="width:100%; max-width:380px;">
-                    <h2 style="text-align:center; margin-bottom:8px; color:var(--pr)">ICT Portal Login</h2>
-                    <p style="text-align:center; font-size:12px; color:var(--mu-text); margin-bottom:20px;">Silakan login dengan akun Staf atau Admin</p>
-                    <form id="loginForm">
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:12px; font-weight:600;">Username / Email Admin</label>
-                            <input type="text" id="loginUser" required placeholder="Masukkan Username/Email">
-                        </div>
-                        <div style="margin-bottom:18px;">
-                            <label style="font-size:12px; font-weight:600;">Password</label>
-                            <input type="password" id="loginPass" required placeholder="••••••••">
-                        </div>
-                        <button type="submit" style="width:100%" class="btn-gold">Masuk Portal</button>
-                    </form>
-                </div>
-            </div>
-        `;
-    }
-
-    function renderViewContent() {
-        if (state.currentView === 'dashboard') {
-            return `
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
-                    <div class="glass-card">
-                        <span style="font-size:12px; color:var(--mu-text)">Total Pegawai ICT</span>
-                        <h3 style="font-size:28px; margin-top:6px;">${state.dummyData.profiles.length}</h3>
-                    </div>
-                    <div class="glass-card">
-                        <span style="font-size:12px; color:var(--mu-text)">Tiket Helpdesk Open</span>
-                        <h3 style="font-size:28px; margin-top:6px; color:var(--er)">${state.dummyData.tickets.filter(t=>t.status==='Open').length}</h3>
-                    </div>
-                </div>
-                <div class="glass-card" style="margin-top:16px;">
-                    <h3>Informasi Portal</h3>
-                    <p style="font-size:13px; margin-top:8px;">Selamat datang di portal terpadu ICT. Semua aktivitas, presensi, dan pelaporan terintegrasi langsung secara real-time.</p>
-                </div>
-            `;
-        }
-
-        if (state.currentView === 'tiket') {
-            return `
-                <div class="glass-card">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
-                        <h3>SLA / Helpdesk IT & Multimedia</h3>
-                        <button onclick="alert('Fitur tambah tiket dibuka!')">+ Tiket Baru</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Pelapor</th>
-                                    <th>Kategori</th>
-                                    <th>Judul Masalah</th>
-                                    <th>Prioritas</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${state.dummyData.tickets.map(t => `
-                                    <tr>
-                                        <td>${t.tanggal}</td>
-                                        <td>${t.nama}</td>
-                                        <td>${t.kategori}</td>
-                                        <td>${t.judul}</td>
-                                        <td><span style="color:red; font-weight:bold">${t.prioritas}</span></td>
-                                        <td><b>${t.status}</b></td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
-
-        return `<div class="glass-card"><h3>Modul ${state.currentView}</h3><p style="margin-top:8px;">Modul aktif dan siap digunakan dalam mode sinkronisasi Supabase.</p></div>`;
-    }
-
-    function bindLoginEvents() {
-        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('loginUser').value;
-            const p = document.getElementById('loginPass').value;
-
-            if (IS_PREVIEW) {
-                const found = state.dummyData.profiles.find(x => x.username === u && x.pass === p);
-                if (found) {
-                    state.user = found;
-                    sessionStorage.setItem('ict_user', JSON.stringify(found));
-                    render();
-                } else {
-                    alert('Username atau password dummy salah! (Gunakan admin / admin123)');
-                }
-            } else {
-                // Supabase Hybrid Login Check
-                const { data, error } = await supabase.from('profiles').select('*').eq('username', u).eq('password', p).single();
-                if (data) {
-                    state.user = data;
-                    sessionStorage.setItem('ict_user', JSON.stringify(data));
-                    render();
-                } else {
-                    alert('Gagal Login. Periksa kredensial Anda!');
-                }
-            }
-        });
-    }
-
-    // GLOBAL ACTIONS
-    window.navigate = (view) => {
-        state.currentView = view;
-        render();
-    };
-
-    window.logout = () => {
-        state.user = null;
-        sessionStorage.removeItem('ict_user');
-        render();
-    };
-
-    // INIT
-    autoSetupDatabase();
-    render();
-</script>
-
-</body>
-</html>
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>ICT Portal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{--bg:#f3f6f9;--cd:#fff;--tx:#1b2430;--mu:#667386;--bd:#dce3ea;--pr:#0c5b5b;--tl:#208a8a;--ac:#ffcc00;--on:#fff;--or:#ffa500;--gn:#86bd17;--bl:#78b9fa;--ok:#15803d;--er:#b91c1c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141a;--cd:#18202a;--tx:#e6ebf1;--mu:#93a0b0;--bd:#2a3543}}
+:root[data-theme="dark"]{--bg:#0f141a;--cd:#18202a;--tx:#e6ebf1;--mu:#93a0b0;--bd:#2a3543}
+html,body{height:100%;margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+*{box-sizing:border-box}.app{display:flex;height:100%}
+.side{width:262px;background:var(--pr);color:var(--on);overflow:auto;flex:none;padding:10px}
+.main{flex:1;overflow:auto;padding:14px;min-width:0}
+.brand{display:flex;flex-direction:column;align-items:center;gap:8px;font-weight:700;font-size:17px;text-align:center;padding:8px 6px 14px}.brand img{width:92px;height:92px;object-fit:contain;background:#fff;border-radius:18px;padding:5px;box-shadow:0 4px 10px #0004}.lg{width:92px;height:92px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:46px;box-shadow:0 4px 10px #0004,inset -4px -4px 8px #0003,inset 3px 3px 6px #fff8}.sg{display:none}.sg.op2{display:block}.nh{cursor:pointer}.ic{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;margin-right:8px;border-radius:9px;background:linear-gradient(145deg,#fff,#ffe9a0 60%,#f5b800);box-shadow:2px 3px 6px #0006,inset -2px -2px 4px #0003,inset 2px 2px 4px #fff;font-size:15px;vertical-align:middle;transition:.15s}.nv:hover .ic,.nh:hover .ic{transform:translateY(-2px) rotate(-5deg)}
+.gl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:inherit;opacity:.75;margin:12px 6px 4px}
+.nv{display:block;padding:7px 10px;border-radius:7px;color:inherit;text-decoration:none;cursor:pointer}.nv:hover{background:#ffffff26}.nv.on{background:var(--ac);color:#1b2430;font-weight:600}.nv.sb{padding-left:24px;font-size:13px}.nh{padding:7px 10px;font-weight:600;color:inherit;opacity:.85;font-size:13px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--cd);border:1px solid var(--bd);border-bottom:3px solid var(--ac);border-radius:10px;padding:8px 12px}.top b{flex:1}.hb{display:none}.bell{position:relative;background:var(--bg);color:var(--tx);border:1px solid var(--bd)}.bd{position:absolute;top:-6px;right:-6px;background:var(--er);color:#fff;border-radius:99px;font-size:11px;padding:0 5px}.kp{border-left:5px solid var(--tl)}.kp:nth-child(2){border-color:var(--ac)}.kp:nth-child(3){border-color:var(--or)}.kp:nth-child(4){border-color:var(--gn)}.kp:nth-child(5){border-color:var(--bl)}.kp:nth-child(6){border-color:var(--pr)}button.y{background:var(--ac);color:#1b2430}
+.cd{background:var(--cd);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:12px}
+.gr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}.kp b{display:block;font-size:24px}.kp span{color:var(--mu);font-size:12px}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}.cg .cd{margin:0}
+button,.bt{background:var(--pr);color:var(--on);border:0;border-radius:7px;padding:7px 12px;cursor:pointer;font:inherit}button.g{background:transparent;color:var(--tx);border:1px solid var(--bd)}button.r{background:var(--er)}button.s{padding:3px 8px;font-size:12px}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:7px 9px;width:100%}
+.tb{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;align-items:center}.tb input,.tb select{width:auto;flex:1;min-width:120px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;background:var(--cd)}th,td{padding:7px 9px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}th{font-size:12px;background:var(--pr);color:var(--on);text-transform:uppercase}
+.ac{display:flex;gap:4px}.tg{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--bg);border:1px solid var(--bd)}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:50;padding:12px}.md{background:var(--cd);border-radius:12px;padding:16px;width:100%;max-width:520px;max-height:90%;overflow:auto}
+.fl{margin-bottom:9px}.fl label{display:block;font-size:12px;color:var(--mu);margin-bottom:3px}
+.au{max-width:380px;margin:8vh auto;border-top:5px solid var(--ac)}.au h2{margin:0 0 4px}.mu{color:var(--mu)}
+.cl{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.cl div{min-height:54px;border:1px solid var(--bd);border-radius:6px;padding:3px;font-size:11px;background:var(--cd);overflow:hidden}.cl .h{min-height:0;border:0;background:none;color:var(--mu);text-align:center}.cl i{display:block;background:var(--pr);color:#fff;border-radius:4px;padding:0 3px;margin-top:2px;font-style:normal;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch{height:300px;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:6px}.ms{max-width:78%;padding:6px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--bd)}.ms.me{align-self:flex-end;background:var(--pr);color:var(--on)}
+@media(max-width:800px){.tw table,.tw tbody,.tw tr,.tw td{display:block}.tw thead{display:none}.tw tr{border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;padding:6px;background:var(--cd)}.tw td{border:0;white-space:normal;display:flex;gap:8px;padding:3px 4px}.tw td::before{content:attr(data-l);color:var(--mu);min-width:92px;font-size:12px}.tw td.ac{flex-wrap:wrap}.tw td.ac::before{display:none}.md{max-height:96%}button,input,select{min-height:38px}.tb button{flex:1}.cl div{min-height:44px;font-size:10px}.cg{grid-template-columns:1fr}.side{position:fixed;left:0;top:0;bottom:0;z-index:40;transform:translateX(-105%);transition:.2s;padding-top:calc(10px + env(safe-area-inset-top,0px))}.side.op{transform:none}.hb{display:inline-block}.main{padding:10px}}
+</style></head><body><div id="root"></div>
+<script>
+const $=s=>document.querySelector(s),e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const mem={},LS={g(k,d){if(k in mem)return mem[k];try{const v=localStorage.getItem('icp_'+k);return v?JSON.parse(v):d}catch(x){return d}},s(k,v){mem[k]=v;try{localStorage.setItem('icp_'+k,JSON.stringify(v))}catch(x){}}};
+let users=LS.g('users',[]),cfg=LS.g('cfg',{name:'ICT Portal',color:'#0c5b5b',in:'07:30',out:'16:30',logo:'',wa:true}),me=null,cur='',L=null,charts=[],view=[];
+const H=async p=>{try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('icp'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(x){return p}};
+const slug=s=>s.toLowerCase().replace(/[^a-z0-9]+/g,'');
+const uc=s=>s.charAt(0).toUpperCase()+s.slice(1),LB={kpi:'Indikator Kinerja Utama (KPI)',sumber:'Sumber Data & Bukti Fisik',bukti:'Link Bukti',nip:'NIP',wa:'No. WhatsApp',pic:'PIC',foto:'Foto'};
+const P=s=>s.split(',').map(x=>{const[k,t='text']=x.split(':');const m=t.match(/^(\w+)\((.*)\)$/);return m?{k,l:LB[k]||uc(k),t:m[1],o:m[2].split('|')}:{k,l:LB[k]||uc(k),t}});
+const ST='status:select(Menunggu|Disetujui|Ditolak)',IZ=x=>`tanggal:date,nama:user,${x},alasan:area,${ST}`,PK='kegiatan,pic,mulai:date,selesai:date,status:select(Rencana|Berjalan|Selesai|Tertunda)',TP='tanggal:date,judul,link:url,catatan:area',LP='periode,nama:user,uraian:area,hasil:area,file:url',AP='bulan:month,judul,nama:user,nominal:number,file:url,'+ST,JD='tanggal:date,kegiatan,petugas:user,keterangan:area';
+const UF='foto:img,nama,username,role:select(Direktur|Manajer|Staf),nip,jabatan,bagian,telepon,wa,email,alamat:area,tglmasuk:date,password:pass';
+const cnt=(a,k)=>{const o={};a.forEach(r=>o[r[k]||'-']=(o[r[k]||'-']||0)+1);return o};
+const KP=[['Manajemen & Strategi','Memimpin pengembangan ICT, menetapkan arah kebijakan, melakukan monitoring, evaluasi, pelaporan, dan rapat strategis.',[['Realisasi program inovasi digitalisasi.','Program Inovasi'],['Tingkat hasil rapat yang ditindaklanjuti.','Laporan Hasil Rapat']]],
+['Layanan & Infrastruktur IT','Mengembangkan strategi ICT, layanan digital, website, media sosial, sistem informasi, dan inovasi teknologi.',[['Optimalisasi penggunaan MS Teams sebagai digital worksheet.','Data akun aktif'],['Tingkat pemenuhan SLA layanan ICT.','Service Level Agreement (SLA)'],['Rutinitas dan keberhasilan backup data online.','Laporan Back Up']]],
+['Anggaran & Keuangan','Merencanakan dan mengendalikan penggunaan anggaran program ICT secara efektif dan sesuai ketentuan.',[['Efisiensi dan efektivitas penggunaan anggaran.','Laporan Anggaran']]],
+['Media & Kemitraan','Mengelola komunikasi digital, promosi sekolah, serta menjalin kerja sama dengan media, vendor, dan mitra teknologi.',[['Jumlah kegiatan kolaborasi dengan media/mitra.','MOU yang disepakati 2 pihak'],['Tingkat engagement konten media sosial.','Data engagement']]],
+['SDM & Budaya Kerja','Menanamkan budaya kerja Islami, disiplin, profesionalisme, dan kepatuhan peraturan melalui pembinaan dan penegakan disiplin.',[['Partisipasi pegawai pada sosialisasi SOP/kebijakan.','Daftar Hadir'],['Tingkat kehadiran dan kepatuhan jam kerja.','Rekap Absensi'],['Pelaksanaan 1on1 Coaching & Mentoring.',''],['Pengembangan kompetensi pegawai ICT.','']]]];
+const MENU=[
+{g:'Utama',i:[{id:'dash',t:'Dashboard',adm:1},{id:'notif',t:'Pemberitahuan'},{t:'KPI ICT',f:'kpi:area,sumber,bukti:url,capaian,keterangan:area',x:'kpx',s:KP.map(k=>k[0])}]},
+{g:'Kepegawaian',i:[
+{id:'profil',t:'Data Profile',src:'users',f:UF,own:1},
+{id:'absen',t:'Kehadiran Harian',own:1,f:'tanggal:date,nama:user,masuk:time,pulang:time,status:select(Tepat Waktu|Terlambat|Pulang Awal|Alpa)',x:'abx',ch:r=>({t:'doughnut',k:cnt(r,'status')})},
+{t:'Perizinan',own:1,s:[['Izin Tidak Masuk (ITM)',IZ('sampai:date')],['Izin Masuk Telat (IMT)',IZ('jam:time')],['Izin Meninggalkan Pekerjaan (IMP)',IZ('jam:time')],['Izin Pulang Lebih Awal (IPLA)',IZ('jam:time')]]},
+{id:'keg',t:'Kehadiran Kegiatan',own:1,f:'tanggal:date,nama:user,kegiatan:select(Tahsin|MMQ|Jum’at Sehat|Kegiatan Lainnya),kehadiran:select(Hadir|Izin|Alpa)',ch:r=>({t:'bar',k:cnt(r,'kegiatan')})},
+{id:'sop',t:'SOP dan TUPOKSI',f:'jenis:select(SOP|Tupoksi),judul,uraian:area,file:url'},
+{t:'Program Kerja',f:PK,s:['Harian','Pekanan','Bulanan','Per-Semester','Tahunan','Kondisional/Tentatif']},
+{t:'Laporan',own:1,s:[['Planner Harian Staf',LP],['Bulanan Manajer',LP],['Tahunan Manajer',LP]]},
+{id:'chat',t:'Chat Personal & Grup',c:1},
+{id:'kal',t:'Kalender Kegiatan/Akademik',f:'tanggal:date,kegiatan,unit:select(KB|TK|SD|SMP|SIT),kategori:select(Akademik|Kegiatan|Libur|Rapat),keterangan:area',x:'kalx'}]},
+{g:'Content Framework',i:[
+{id:'cplan',t:'Content Planner',f:'tanggal:date,judul,platform:select(Instagram|TikTok|YouTube|Facebook|Website),pic,status:select(Ide|Desain|Siap|Tayang)',x:'cpx'},
+{t:'Template Desain',f:TP,s:['Desain SIT','Desain SPMB','Desain KB-TK','Desain SD','Desain SMP','Desain Ucapan','Desain Prestasi','Desain Story Info']},
+{id:'sosmed',t:'Analisis Media Sosial',f:'tanggal:date,platform:select(Instagram|TikTok|YouTube|Facebook),followers:number,likes:number,reach:number,postingan:number',ch:r=>{const o={};r.forEach(x=>o[x.platform]=(o[x.platform]||0)+(+x.reach||0));return{t:'bar',k:o,n:'Reach'}}},
+{id:'ref',t:'Referensi Konten',f:TP}]},
+{g:'Lainnya',i:[
+{id:'train',t:'Training dan Tools',f:'tanggal:date,judul,jenis:select(Training|Tools),link:url,catatan:area'},
+{t:'Jadwal',f:JD,s:['Dokumentasi Pembiasaan','Ketring','Sapa Pagi']},
+{t:'Link Drive Pusat Data',f:'nama,link:url,keterangan:area',s:[['Admin',null,1],['Staf']]},
+{t:'Data Inventaris',s:[['Data Lengkap','kode,barang,kategori,jumlah:number,kondisi:select(Baik|Rusak Ringan|Rusak Berat),lokasi'],['Peminjaman/Penggunaan','tanggal:date,nama:user,barang,jumlah:number,kembali:date,status:select(Dipinjam|Dikembalikan)']]},
+{t:'RAB dan Keuangan',s:[['RAB Tahunan','tahun,pos,anggaran:number,keterangan:area'],['RAB Bulanan','bulan:month,pos,anggaran:number,realisasi:number',,'rab'],['Approval Proposal RAB Bulanan',AP],['Approval LPJ RAB Bulanan',AP],['Uang Kas','tanggal:date,keterangan,jenis:select(Pemasukan|Pengeluaran),nominal:number,penanggung:user,bukti:url']]},
+{id:'tiket',t:'SLA/Helpdesk IT & Multimedia',own:1,f:'tanggal:date,nama:user,kategori:select(IT|Multimedia),judul,deskripsi:area,prioritas:select(Rendah|Sedang|Tinggi),status:select(Open|Diproses|Selesai)'},
+{id:'set',t:'Setting General',set:1}]}];
+const LV={};
+MENU.forEach(g=>g.i.forEach(it=>{if(it.s){it.sl=it.s.map(s=>{s=Array.isArray(s)?s:[s];const id=slug(it.t)+'_'+slug(s[0]);LV[id]={id,t:it.t+' – '+s[0],f:P(s[1]||it.f),own:it.own,adm:s[2]||it.adm,x:it.x};if(id==='rabdankeuangan_rabbulanan')LV[id].ch=r=>({t:'bar',k:Object.fromEntries(r.map(x=>[x.bulan||'-',+x.anggaran||0])),n:'Anggaran'});return{id,n:s[0]}})}else{it.id=it.id||slug(it.t);LV[it.id]={...it,f:it.f&&P(it.f),t:it.t}}}));
+KP.forEach(k=>{const id='kpiict_'+slug(k[0]);if(!LS.g('d_'+id,null))LS.s('d_'+id,k[2].map(r=>({id:uid(),kpi:r[0],sumber:r[1]})))});
+const sm_=(d,j)=>d.filter(r=>r.jenis==j).reduce((a,r)=>a+(+r.nominal||0),0);
+Object.assign(LV.rabdankeuangan_uangkas,{x:'kasx',ch:r=>({t:'doughnut',k:{Pemasukan:sm_(r,'Pemasukan'),Pengeluaran:sm_(r,'Pengeluaran')}})});
+const CM=()=>LS.g('cmenu',[]),CG={g:'Menu Kustom',i:[]};MENU.push(CG);
+function syncCM(){CG.i=CM().map(c=>{LV[c.id]={id:c.id,t:c.t,f:P(c.f)};return{id:c.id,t:c.t,ic:c.ic}})}syncCM();
+const IC={dashboard:'📊',pemberitahuan:'🔔',kpiict:'🎯',dataprofile:'🪪',kehadiranharian:'⏰',perizinan:'📝',kehadirankegiatan:'🕌',sopdantupoksi:'📘',programkerja:'🗂️',laporan:'📑',chatpersonalgrup:'💬',kalenderkegiatanakademik:'📅',contentplanner:'🗓️',templatedesain:'🎨',analisismediasosial:'📈',referensikonten:'💡',trainingdantools:'🎓',jadwal:'🕒',linkdrivepusatdata:'☁️',datainventaris:'📦',rabdankeuangan:'💰',slahelpdeskitmultimedia:'🛠️',settinggeneral:'⚙️'};
+const ico=i=>`<span class="ic">${IC[slug(i.t)]||i.ic||'📁'}</span>`;
+const UC={KB:'#c084fc',TK:'#ffa500',SD:'#86bd17',SMP:'#78b9fa',SIT:'#0c5b5b'},SC2={Ide:'#78b9fa',Desain:'#ffa500',Siap:'#86bd17',Tayang:'#0c5b5b'};
+const tc=c=>{const h=c.replace('#','');return parseInt(h.slice(0,2),16)*.299+parseInt(h.slice(2,4),16)*.587+parseInt(h.slice(4,6),16)*.114>150?'#1b2430':'#fff'};
+const rc=r=>UC[r.unit]||(L.id=='cplan'&&SC2[r.status])||(r.jenis=='Pemasukan'?'#86bd17':r.jenis=='Pengeluaran'?'#ffa500':'')||'';
+const isM=()=>me.role==='Manajer',isA=()=>me.role!=='Staf';
+const getD=l=>l.src==='users'?users:LS.g('d_'+l.id,[]),setD=(l,d)=>{l.src==='users'?(users=d,LS.s('users',d)):LS.s('d_'+l.id,d)};
+const rows=l=>{let d=getD(l);if(l.own&&!isA())d=d.filter(r=>r.nama===me.nama);return d};
+function theme(){const h=cfg.color.replace('#',''),l=parseInt(h.slice(0,2),16)*.299+parseInt(h.slice(2,4),16)*.587+parseInt(h.slice(4,6),16)*.114;document.documentElement.style.setProperty('--pr',cfg.color);document.documentElement.style.setProperty('--on',l>150?'#1b2430':'#fff');document.title=cfg.name}
+function auth(m){$('#root').innerHTML=`<div class="au cd">${cfg.logo?`<img src="${cfg.logo}" style="height:96px;display:block;margin:0 auto 8px" alt="">`:''}<h2>${e(cfg.name)}</h2><p class="mu">${m=='setup'?'Pengaturan awal: buat akun Super Admin (Manajer/Kepala Bagian) pertama.':'Silakan login untuk melanjutkan.'}</p>${m=='setup'?'<div class="fl"><label>Nama lengkap</label><input id="a_n"></div>':''}<div class="fl"><label>Username</label><input id="a_u" autocomplete="username"></div><div class="fl"><label>Password</label><input id="a_p" type="password" autocomplete="current-password"></div><button style="width:100%" onclick="doAuth('${m}')">${m=='setup'?'Buat Akun & Masuk':'Login'}</button></div>`}
+async function doAuth(m){const u=$('#a_u').value.trim(),p=$('#a_p').value;if(!u||!p)return alert('Lengkapi username dan password');const h=await H(p);if(m=='setup'){const n=$('#a_n').value.trim();if(!n)return alert('Isi nama');me={id:uid(),nama:n,username:u,ph:h,role:'Manajer'};users=[me];LS.s('users',users)}else{me=users.find(x=>x.username===u&&x.ph===h);if(!me)return alert('Username atau password salah')}LS.s('me',me.id);shell()}
+function logout(){LS.s('me',null);me=null;auth('login')}
+function shell(){let h=`<div class="brand">${cfg.logo?`<img src="${cfg.logo}" alt="Logo">`:'<div class="lg">🏫</div>'}<span>${e(cfg.name)}</span></div>`;
+MENU.forEach(g=>{const its=g.i.filter(i=>!(i.adm&&!isA())&&!(i.set&&!isM()));if(!its.length)return;h+=`<div class="gl">${g.g}</div>`;its.forEach(i=>{if(i.sl){h+=`<div class="nh" onclick="this.nextElementSibling.classList.toggle('op2')">${ico(i)}${i.t} ▾</div><div class="sg">`+i.sl.filter(s=>!(LV[s.id].adm&&!isA())).map(s=>`<a class="nv sb" data-id="${s.id}" onclick="go('${s.id}')">${s.n}</a>`).join('')+'</div>'}else h+=`<a class="nv" data-id="${i.id}" onclick="go('${i.id}')">${ico(i)}${i.t}</a>`})});
+h+=`<div class="gl">Akun</div><div class="nh">${e(me.nama)} · ${me.role}</div><a class="nv" onclick="logout()">Keluar</a>`;
+$('#root').innerHTML=`<div class="app"><div class="side" id="sd">${h}</div><div class="main"><div class="top"><button class="g hb" onclick="$('#sd').classList.toggle('op')">☰</button><b>${e(cfg.name)}</b><button class="bell" onclick="go('notif')" title="Pemberitahuan">🔔<span class="bd" id="bd"></span></button><span class="mu">${e(me.nama)}</span></div><div id="pg"></div></div></div>`;go(isA()?'dash':'absen')}
+function go(id){cur=id;badge();$('#sd').classList.remove('op');document.querySelectorAll('.nv').forEach(a=>a.classList.toggle('on',a.dataset.id==id));const ac_=document.querySelector('.nv.on');if(ac_&&ac_.closest('.sg'))ac_.closest('.sg').classList.add('op2');charts.forEach(c=>c.destroy());charts=[];if(id=='dash')return dash();if(id=='set')return sett();if(id=='notif')return notifPg();L=LV[id];if(L.c)return chat();tab()}
+function mk(el,t,labels,ds){if(!window.Chart)return;const col=['#0c5b5b','#ffcc00','#208a8a','#ffa500','#86bd17','#78b9fa'];charts.push(new Chart($(el),{type:t,data:{labels,datasets:ds.map((d,i)=>({label:d[0],data:d[1],backgroundColor:t=='line'?col[i]:t=='doughnut'?col:col[i],borderColor:col[i],tension:.3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:ds.length>1||t=='doughnut'}}}}))}
+const D=k=>LS.g('d_'+k,[]),today=()=>new Date().toISOString().slice(0,10);
+function dash(){const ab=D('absen'),td=ab.filter(r=>r.tanggal==today()),iz=['itm','imt','imp','ipla'].flatMap(k=>D('perizinan_'+({itm:'izintidakmasukitm',imt:'izinmasuktelatimt',imp:'izinmeninggalkanpekerjaanimp',ipla:'izinpulanglebihawalipla'})[k]));
+const pend=iz.filter(r=>r.status=='Menunggu').length,tk=D('tiket').filter(r=>r.status!='Selesai').length,days=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().slice(0,10)});
+$('#pg').innerHTML=`<h2>Dashboard</h2><div class="gr">${[['Pegawai',users.length],['Hadir hari ini',td.length],['Terlambat hari ini',td.filter(r=>r.status=='Terlambat').length],['Izin menunggu',pend],['Tiket helpdesk aktif',tk],['Item inventaris',D('datainventaris_datalengkap').length]].map(k=>`<div class="cd kp"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('')}</div><div class="cd"><b>🔔 Pemberitahuan terbaru</b>${mine().slice(0,5).map(n=>`<div>• ${e(n.text)} <small class="mu">${n.t}</small></div>`).join('')||' <span class="mu">Belum ada.</span>'}<div class="tb"><button class="s g" onclick="go('notif')">Lihat semua</button></div></div><div class="cg"><div class="cd"><b>Kehadiran 7 hari</b><div style="height:240px"><canvas id="c1"></canvas></div></div><div class="cd"><b>Status izin</b><div style="height:240px"><canvas id="c2"></canvas></div></div><div class="cd"><b>Reach media sosial</b><div style="height:240px"><canvas id="c3"></canvas></div></div><div class="cd"><b>RAB bulanan</b><div style="height:240px"><canvas id="c4"></canvas></div></div></div>`;
+mk('#c1','bar',days.map(d=>d.slice(5)),[['Tepat waktu',days.map(d=>ab.filter(r=>r.tanggal==d&&r.status!='Terlambat').length)],['Terlambat',days.map(d=>ab.filter(r=>r.tanggal==d&&r.status=='Terlambat').length)]]);
+const ic=cnt(iz,'status');mk('#c2','doughnut',Object.keys(ic),[['Izin',Object.values(ic)]]);
+const sm={};D('sosmed').forEach(r=>sm[r.platform]=(sm[r.platform]||0)+(+r.reach||0));mk('#c3','bar',Object.keys(sm),[['Reach',Object.values(sm)]]);
+const rb=D('rabdankeuangan_rabbulanan');mk('#c4','bar',rb.map(r=>r.bulan),[['Anggaran',rb.map(r=>+r.anggaran||0)],['Realisasi',rb.map(r=>+r.realisasi||0)]])}
+function cell(f,v,r){if(f.t=='img')return v?`<img src="${v}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">`:'';if(f.t=='number'&&['nominal','anggaran','realisasi'].includes(f.k)&&v!==''&&v!=null)return (+v).toLocaleString('id-ID');if(f.t=='url'&&v)return`<a href="${e(v)}" target="_blank" rel="noopener">Buka</a>`;if(f.k=='status'||f.k=='kehadiran'){const sc={Disetujui:'#86bd17',Ditolak:'#dc2626',Menunggu:'#ffcc00',Selesai:'#86bd17',Hadir:'#86bd17','Tepat Waktu':'#86bd17',Terlambat:'#ffa500','Pulang Awal':'#ffa500',Open:'#78b9fa',Diproses:'#ffcc00'}[v];return v?`<span class="tg" style="${sc?`background:${sc};color:${v=='Ditolak'?'#fff':'#1b2430'};border-color:${sc}`:''}">${e(v)}</span>`:''}return e(v)}
+function tab(){const rs=rows(L),canAdd=(L.src!='users'||isM())&&!((L.id=='absen'||L.id.startsWith('kpiict'))&&!isA()),q=($('#q')||{}).value||'';view=rs.filter(r=>JSON.stringify(r).toLowerCase().includes(q.toLowerCase())&&(L.id!='kal'||cfu=='Semua'||r.unit==cfu));const fs=L.f.filter(f=>f.t!='pass'),ap=isA()&&L.f.some(f=>f.k=='status'&&f.o&&f.o.includes('Disetujui'));
+$('#pg').innerHTML=`<h2>${e(L.t)}</h2>${L.x?window[L.x]():''}<div class="tb">${canAdd?'<button onclick="frm()">+ Tambah</button>':''}<button class="g" onclick="$('#imf').click()">Impor CSV</button><button class="g" onclick="lnk()">Impor via Link</button><input type="file" id="imf" accept=".csv" hidden onchange="imp(this)"><select id="exs" onchange="exp(this.value);this.value=''"><option value="">Export…</option><option value="xlsx">Excel (.xlsx)</option><option value="pdf">PDF</option><option value="jpg">JPG</option><option value="html">Dokumen (.html, buka di Word)</option><option value="csv">CSV</option></select><input id="q" placeholder="Cari…" value="${e(q)}" oninput="tab();$('#q').focus()"></div>${L.ch&&view.length?'<div class="cd"><div style="height:240px"><canvas id="cc"></canvas></div></div>':''}<div class="tw" id="tw"><table><thead><tr>${fs.map(f=>`<th>${f.l}</th>`).join('')}<th></th></tr></thead><tbody>${view.map(r=>`<tr ${rc(r)?`style="background:${rc(r)}2b"`:''}>${fs.map(f=>`<td data-l="${f.l}">${cell(f,r[f.k],r)}</td>`).join('')}<td class="ac">${ap&&r.status=='Menunggu'?`<button class="s" onclick="ap('${r.id}','Disetujui')">Setujui</button><button class="s r" onclick="ap('${r.id}','Ditolak')">Tolak</button>`:''}${canEd(r)?`<button class="s g" onclick="frm('${r.id}')">Edit</button>`:''}${canAdd&&r.id!=me.id&&(isA()||!r.status||r.status=='Menunggu'||r.status=='Open')?`<button class="s g" onclick="del('${r.id}')">Hapus</button>`:''}${L.src=='users'&&(isA()||r.id==me.id)?`<button class="s y" onclick="idc('${r.id}')">ID Card</button>`:''}<button class="s g" onclick="wa('${r.id}')">WA</button></td></tr>`).join('')||`<tr><td colspan="${fs.length+1}" class="mu">Belum ada data.</td></tr>`}</tbody></table></div>`;
+if(L.ch&&view.length){const c=L.ch(view);mk('#cc',c.t,Object.keys(c.k),[[c.n||'Jumlah',Object.values(c.k)]])}}
+const canEd=r=>(L.id=='absen'||L.id.startsWith('kpiict'))?isA():(L.src!='users'||isM()||r.id==me.id)&&(isA()||!r.status||r.status=='Menunggu'||r.status=='Open');
+function frm(id){const r=id?getD(L).find(x=>x.id==id):{},ro=f=>(f.k=='role'&&!isM())||(f.k=='nama'&&f.t=='user'&&!isA());$('#root').insertAdjacentHTML('beforeend',`<div class="ov" id="ov"><div class="md"><h3>${id?'Edit':'Tambah'} ${e(L.t)}</h3>${L.f.filter(f=>!(f.k=='status'&&!isA())).map(f=>{let v=r[f.k]??'';if(!id&&f.t=='user'&&f.k=='nama')v=me.nama;if(!id&&f.k=='tanggal')v=today();if(!id&&f.k=='status'&&f.o)v=f.o[0];let i;if(f.t=='select')i=`<select id="f_${f.k}">${f.o.map(o=>`<option ${o==v?'selected':''}>${o}</option>`).join('')}</select>`;else if(f.t=='user')i=`<select id="f_${f.k}" ${ro(f)?'disabled':''}>${users.map(u=>`<option ${u.nama==v?'selected':''}>${e(u.nama)}</option>`).join('')}</select>`;else if(f.t=='img')i=`<input type="file" accept="image/*" onchange="pimg('${f.k}',this)"><br><img id="pv_${f.k}" src="${e(v)}" style="height:60px;margin-top:4px;${v?'':'display:none'}"><input type="hidden" id="f_${f.k}" value="${e(v)}">`;else if(f.t=='area')i=`<textarea id="f_${f.k}" rows="3">${e(v)}</textarea>`;else i=`<input id="f_${f.k}" type="${f.t=='pass'?'password':f.t}" value="${f.t=='pass'?'':e(v)}" ${ro(f)?'disabled':''} ${f.t=='pass'&&id?'placeholder="Kosongkan jika tidak diubah"':''}>`;return`<div class="fl"><label>${f.l}${f.k=='wa'?' (format 62812…)':''}</label>${i}</div>`}).join('')}<div class="tb"><button onclick="sv('${id||''}')">Simpan</button><button class="g" onclick="$('#ov').remove()">Batal</button></div></div></div>`)}
+async function sv(id){const o={};L.f.forEach(f=>{const el=$('#f_'+f.k);if(el&&!el.disabled)o[f.k]=el.value});let d=getD(L);
+if(L.src=='users'){const pw=o.password;delete o.password;if(pw)o.ph=await H(pw);if(!id&&!pw)return alert('Password wajib diisi');if(d.some(u=>u.username==o.username&&u.id!=id))return alert('Username sudah dipakai')}
+else if(L.own&&!isA())o.nama=me.nama;
+if(!id&&!isA())L.f.forEach(f=>{if(f.k=='status'&&f.o)o.status=f.o[0]});
+if(id)d=d.map(r=>r.id==id?{...r,...o}:r);else d.push({id:uid(),...o});setD(L,d);if(L.src=='users')me=d.find(u=>u.id==me.id)||me;if(!id&&!isA()&&L.src!='users'&&L.id!='absen'&&L.f.some(f=>f.k=='status'))notify('@admin',`${me.nama} mengajukan: ${L.t}`);$('#ov').remove();tab();badge()}
+function del(id){if(!confirm('Hapus data ini?'))return;setD(L,getD(L).filter(r=>r.id!=id));tab()}
+function open_(u){const a=document.createElement('a');a.href=u;a.target='_blank';a.rel='noopener';a.click()}
+function wa(id){const r=getD(L).find(x=>x.id==id),u=L.src=='users'?r:users.find(x=>x.nama==(r.nama||r.petugas)),n=((u&&u.wa)||'').replace(/\D/g,'');if(!n)return alert('Nomor WhatsApp pegawai terkait belum diisi di Data Profile.');open_('https://wa.me/'+n+'?text='+encodeURIComponent(`[${cfg.name}] ${L.t}: `+L.f.filter(f=>f.t!='pass'&&r[f.k]).map(f=>f.l+' '+r[f.k]).join(', ')))}
+function ap(id,s){setD(L,getD(L).map(r=>r.id==id?{...r,status:s}:r));const r=getD(L).find(x=>x.id==id),u=users.find(x=>x.nama==r.nama);notify(r.nama,`${L.t} (${r.tanggal||r.bulan||''}) Anda berstatus: ${s}`);tab();if(cfg.wa&&u&&u.wa&&confirm('Kirim pemberitahuan WhatsApp ke '+u.nama+'?'))open_('https://wa.me/'+u.wa.replace(/\D/g,'')+'?text='+encodeURIComponent(`[${cfg.name}] ${L.t} Anda pada ${r.tanggal||r.bulan||''} berstatus: ${s}`))}
+function csvP(t){const R=[];let r=[],c='',q=0;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch=='"'&&t[i+1]=='"'){c+='"';i++}else if(ch=='"')q=0;else c+=ch}else if(ch=='"')q=1;else if(ch==','||ch==';'){r.push(c);c=''}else if(ch=='\n'||ch=='\r'){if(ch=='\r'&&t[i+1]=='\n')i++;r.push(c);c='';R.push(r);r=[]}else c+=ch}if(c||r.length){r.push(c);R.push(r)}return R.filter(r=>r.some(x=>x.trim()))}
+function imp(inp){const fl=inp.files[0];if(!fl)return;const rd=new FileReader();rd.onload=()=>impTxt(rd.result);rd.readAsText(fl)}
+function impTxt(t){const R=csvP(t.replace(/^\ufeff/,''));if(!R.length)return alert('File kosong');const hd=R.shift().map(x=>x.trim().toLowerCase());let d=getD(L),n=0;R.forEach(r=>{const o={id:uid()};L.f.forEach(f=>{const i=hd.indexOf(f.k);if(i>=0&&f.t!='pass')o[f.k]=r[i]});if(L.src=='users'&&!o.username)return;d=[...d,o];n++});if(L.src!='users'||isM())setD(L,d);alert(n+' baris diimpor');tab()}
+function lnk(){const a=LS.g('lk_'+L.id,[]);$('#root').insertAdjacentHTML('beforeend',`<div class="ov" id="ov"><div class="md"><h3>Impor via Link – ${e(L.t)}</h3><p class="mu">Tempel link file CSV (mis. Google Sheets/Drive yang dibagikan). Link disimpan sebagai sumber impor menu ini.</p><div class="fl"><label>Nama link</label><input id="l_n"></div><div class="fl"><label>Link</label><input id="l_u" type="url" placeholder="https://..."></div><div class="tb"><button onclick="lsv()">Simpan Link</button><button class="y" onclick="lgo($('#l_u').value)">Impor Sekarang</button><button class="g" onclick="$('#ov').remove()">Tutup</button></div>${a.map((x,i)=>`<div class="tb"><span style="flex:1;word-break:break-all"><b>${e(x.n||'Link')}</b><br><small class="mu">${e(x.u)}</small></span><button class="s" onclick="lgo(LS.g('lk_'+L.id,[])[${i}].u)">Impor</button><button class="s g" onclick="open_(LS.g('lk_'+L.id,[])[${i}].u)">Buka</button><button class="s g" onclick="ldl(${i})">Hapus</button></div>`).join('')}</div></div>`)}
+function lsv(){const u=$('#l_u').value.trim();if(!u)return;const a=LS.g('lk_'+L.id,[]);a.push({n:$('#l_n').value,u});LS.s('lk_'+L.id,a);$('#ov').remove();lnk()}
+function ldl(i){const a=LS.g('lk_'+L.id,[]);a.splice(i,1);LS.s('lk_'+L.id,a);$('#ov').remove();lnk()}
+async function lgo(u){u=(u||'').trim();if(!u)return;const m=u.match(/docs\.google\.com\/spreadsheets\/d\/([^/]+)/);if(m)u=`https://docs.google.com/spreadsheets/d/${m[1]}/export?format=csv`;try{const r=await fetch(u);if(!r.ok)throw 0;const t=await r.text();$('#ov')&&$('#ov').remove();impTxt(t)}catch(x){alert('Halaman ini tidak diizinkan mengambil file langsung dari link tersebut. Link dibuka di tab baru: unduh sebagai CSV, lalu pilih "Impor CSV".');open_(u)}}
+const mine=()=>LS.g('notif',[]).filter(n=>n.to==me.nama||n.to=='*'||(n.to=='@admin'&&isA()));
+function notify(to,text){const a=LS.g('notif',[]);a.unshift({id:uid(),to,text,t:new Date().toLocaleString('id-ID'),rd:[]});LS.s('notif',a.slice(0,200))}
+function badge(){const c=mine().filter(n=>!(n.rd||[]).includes(me.id)).length,b=$('#bd');if(b){b.textContent=c||'';b.style.display=c?'':'none'}}
+function rdAll(){const a=LS.g('notif',[]),ids=mine().map(n=>n.id);a.forEach(n=>{if(ids.includes(n.id)&&!(n.rd||[]).includes(me.id)){n.rd=n.rd||[];n.rd.push(me.id)}});LS.s('notif',a);notifPg();badge()}
+function ann(){const x=$('#an').value.trim();if(!x)return;notify('*','📢 '+x+' — '+me.nama);notifPg()}
+function nwa(nid,uid_){const n=LS.g('notif',[]).find(x=>x.id==nid),u=users.find(x=>x.id==uid_);open_('https://wa.me/'+String(u.wa).replace(/\D/g,'')+'?text='+encodeURIComponent(`[${cfg.name}] ${n.text}`))}
+function notifPg(){const rec=n=>n.to=='*'?users:n.to=='@admin'?users.filter(u=>u.role!='Staf'):users.filter(u=>u.nama==n.to);$('#pg').innerHTML=`<h2>Pemberitahuan</h2>${isA()?`<div class="cd"><b>Kirim pengumuman ke semua pegawai</b><div class="tb"><input id="an" placeholder="Tulis pengumuman…"><button class="y" onclick="ann()">Kirim</button></div></div>`:''}<div class="tb"><button class="g" onclick="rdAll()">Tandai semua dibaca</button></div>${mine().map(n=>{const un=!(n.rd||[]).includes(me.id);return`<div class="cd" style="border-left:5px solid ${un?'var(--ac)':'var(--bd)'}"><div>${un?'<b>':''}${e(n.text)}${un?'</b>':''}</div><small class="mu">${n.t}</small>${isA()?`<div class="tb">${rec(n).filter(u=>u.wa&&u.id!=me.id).map(u=>`<button class="s g" onclick="nwa('${n.id}','${u.id}')">WA ${e(u.nama)}</button>`).join('')}</div>`:''}</div>`}).join('')||'<p class="mu">Belum ada pemberitahuan.</p>'}`}
+async function save(name,data){const dl=await claude.use('downloads');if(!dl)return alert('Fitur unduh tidak tersedia di tampilan ini.');try{await dl.save({filename:name,data})}catch(x){if(x&&x.code!='declined')alert('Gagal mengunduh: '+(x.message||x.code))}}
+async function exp(t){if(!t)return;const fs=L.f.filter(f=>f.t!='pass'&&f.t!='img'),hd=fs.map(f=>f.l),B=view.map(r=>fs.map(f=>r[f.k]??'')),n=L.id;
+if(t=='csv')save(n+'.csv',new Blob(['\ufeff'+[hd,...B].map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n')],{type:'text/csv'}));
+else if(t=='xlsx'){const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([hd,...B]),'Data');save(n+'.xlsx',new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})]))}
+else if(t=='pdf'){const d=new jspdf.jsPDF({orientation:'landscape'});d.text(L.t,14,14);d.autoTable({head:[hd],body:B,startY:20,styles:{fontSize:8}});save(n+'.pdf',d.output('blob'))}
+else if(t=='html')save(n+'.html',new Blob(['<meta charset="utf-8"><h3>'+e(L.t)+'</h3><table border="1" cellpadding="4"><tr>'+hd.map(h=>'<th>'+h+'</th>').join('')+'</tr>'+B.map(r=>'<tr>'+r.map(c=>'<td>'+e(c)+'</td>').join('')+'</tr>').join('')+'</table>'],{type:'text/html'}));
+else if(t=='jpg'){const c=await html2canvas($('#tw'),{backgroundColor:getComputedStyle(document.body).backgroundColor});c.toBlob(b=>save(n+'.jpg',b),'image/jpeg',.92)}}
+function abx(){const t=today(),r=getD(L).find(x=>x.tanggal==t&&x.nama==me.nama);return`<div class="cd"><b>Jam kerja: masuk ${cfg.in} – pulang ${cfg.out}</b><p class="mu">Hari ini: masuk ${r&&r.masuk||'-'}, pulang ${r&&r.pulang||'-'}</p><div class="tb"><button onclick="clk('masuk')" ${r&&r.masuk?'disabled':''}>Absen Masuk</button><button class="g" onclick="clk('pulang')" ${!r||r.pulang?'disabled':''}>Absen Pulang</button></div>${isA()?`<div class="tb"><input placeholder="Scan barcode ID Card (alat scanner/ketik kode) lalu Enter" onkeydown="if(event.key=='Enter'){scan(this.value)}"></div>`:''}</div>`}
+function clk(k,u){u=u||me;const h=new Date().toTimeString().slice(0,5),t=today();let d=getD(L),r=d.find(x=>x.tanggal==t&&x.nama==u.nama);if(k=='masuk'){if(r)return alert('Sudah absen masuk');d.push({id:uid(),tanggal:t,nama:u.nama,masuk:h,status:h>cfg.in?'Terlambat':'Tepat Waktu'});if(h>cfg.in)notify('@admin',`${u.nama} terlambat masuk (${h})`)}else if(r){r.pulang=h;if(h<cfg.out&&r.status=='Tepat Waktu')r.status='Pulang Awal'}setD(L,d);tab();badge()}
+function scan(v){const c=v.trim().toUpperCase().replace(/\*/g,''),u=users.find(x=>codeOf(x)==c);if(!u)return alert('Kode tidak dikenal');const r=getD(L).find(x=>x.tanggal==today()&&x.nama==u.nama);clk(r&&r.masuk?'pulang':'masuk',u)}
+const C39=Object.fromEntries('0:nnnwwnwnn 1:wnnwnnnnw 2:nnwwnnnnw 3:wnwwnnnnn 4:nnnwwnnnw 5:wnnwwnnnn 6:nnwwwnnnn 7:nnnwnnwnw 8:wnnwnnwnn 9:nnwwnnwnn A:wnnnnwnnw B:nnwnnwnnw C:wnwnnwnnn D:nnnnwwnnw E:wnnnwwnnn F:nnwnwwnnn G:nnnnnwwnw H:wnnnnwwnn I:nnwnnwwnn J:nnnnwwwnn K:wnnnnnnww L:nnwnnnnww M:wnwnnnnwn N:nnnnwnnww O:wnnnwnnwn P:nnwnwnnwn Q:nnnnnnwww R:wnnnnnwwn S:nnwnnnwwn T:nnnnwnwwn U:wwnnnnnnw V:nwwnnnnnw W:wwwnnnnnn X:nwnnwnnnw Y:wwnnwnnnn Z:nwwnwnnnn -:nwnnnnwnw .:wwnnnnwnn *:nwnnwnwnn'.split(' ').map(x=>[x[0],x.slice(2)]));
+const codeOf=u=>String(u.nip||u.username||'').toUpperCase().replace(/[^0-9A-Z\-.]/g,'');
+function bar(t){let x=10,h='';('*'+t+'*').split('').forEach(ch=>{const p=C39[ch];if(!p)return;for(let i=0;i<9;i++){const w=p[i]=='w'?3:1;if(i%2==0)h+=`<rect x="${x}" y="0" width="${w}" height="46" fill="#000"/>`;x+=w}x+=1});return`<svg viewBox="0 0 ${x+10} 46" style="width:100%;height:50px;background:#fff" preserveAspectRatio="none">${h}</svg>`}
+function idc(id){const u=users.find(x=>x.id==id),c=codeOf(u);$('#root').insertAdjacentHTML('beforeend',`<div class="ov" id="ov"><div class="md" style="max-width:360px"><div id="idk" style="background:#fff;color:#1b2430;border-radius:14px;overflow:hidden;border:1px solid #ccc"><div style="background:${cfg.color};color:${tc(cfg.color)};padding:10px;text-align:center">${cfg.logo?`<img src="${cfg.logo}" height="44" style="background:#fff;border-radius:8px;padding:2px"><br>`:''}<b>${e(cfg.name)}</b><div style="font-size:11px">KARTU IDENTITAS PEGAWAI</div></div><div style="height:6px;background:#ffcc00"></div><div style="text-align:center;padding:12px">${u.foto?`<img src="${u.foto}" style="width:110px;height:140px;object-fit:cover;border-radius:10px;border:3px solid #208a8a">`:'<div style="font-size:70px">👤</div>'}<h3 style="margin:8px 0 0">${e(u.nama)}</h3><div>${e(u.jabatan||u.role)}</div><small>${e(u.bagian||'')}</small><div style="margin:4px 0 8px"><b>NIP: ${e(u.nip||'-')}</b></div>${bar(c)}<small>${c}</small></div></div><div class="tb" style="margin-top:10px"><button onclick="idj()">Unduh JPG</button><button class="g" onclick="$('#ov').remove()">Tutup</button></div></div></div>`)}
+async function idj(){const c=await html2canvas($('#idk'),{scale:2});c.toBlob(b=>save('id-card.jpg',b),'image/jpeg',.92)}
+function pimg(k,inp){const fl=inp.files[0];if(!fl)return;const im=new Image(),rd=new FileReader();rd.onload=()=>{im.onload=()=>{const c=document.createElement('canvas'),w=240,h=Math.round(im.height*w/im.width);c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);const v=c.toDataURL('image/jpeg',.8);$('#f_'+k).value=v;const p=$('#pv_'+k);p.src=v;p.style.display=''};im.src=rd.result};rd.readAsDataURL(fl)}
+let mo=0,cfu='Semua';
+function calG(ev,lab,col){const n=new Date();n.setDate(1);n.setMonth(n.getMonth()+mo);const y=n.getFullYear(),m=n.getMonth(),f=new Date(y,m,1).getDay(),dm=new Date(y,m+1,0).getDate();let h=`<div class="cd"><div class="tb"><button class="g" onclick="mo--;tab()">‹</button><b style="flex:1;text-align:center">${n.toLocaleString('id-ID',{month:'long',year:'numeric'})}</b><button class="g" onclick="mo++;tab()">›</button></div><div class="cl">`+['Min','Sen','Sel','Rab','Kam','Jum','Sab'].map(x=>`<div class="h">${x}</div>`).join('')+'<div style="border:0;background:none"></div>'.repeat(f);for(let i=1;i<=dm;i++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;h+=`<div>${i}${ev.filter(x=>x.tanggal==ds).map(x=>{const c=col(x);return`<i style="background:${c};color:${tc(c)}">${e(lab(x))}</i>`}).join('')}</div>`}return h+'</div></div>'}
+function lg_(o){return`<div class="tb">${Object.entries(o).map(([k,c])=>`<span class="tg" style="background:${c};color:${tc(c)};border-color:${c}">${k}</span>`).join('')}</div>`}
+function kalx(){const ev=getD(L).filter(r=>cfu=='Semua'||r.unit==cfu);return`<div class="tb">${['Semua','KB','TK','SD','SMP','SIT'].map(u=>`<button class="s ${u==cfu?'':'g'}" style="${UC[u]?`border-color:${UC[u]}`:''}" onclick="cfu='${u}';tab()">${u}</button>`).join('')}</div>`+calG(ev,r=>(r.unit?r.unit+': ':'')+r.kegiatan,r=>UC[r.unit]||'#208a8a')+lg_(UC)}
+function cpx(){return calG(getD(L),r=>r.judul+(r.platform?' · '+r.platform:''),r=>SC2[r.status]||'#208a8a')+lg_(SC2)}
+function kasx(){const d=getD(L),i=sm_(d,'Pemasukan'),o=sm_(d,'Pengeluaran'),f=n=>'Rp '+n.toLocaleString('id-ID');return`<div class="gr"><div class="cd kp"><b>${f(i)}</b><span>Total pemasukan</span></div><div class="cd kp"><b>${f(o)}</b><span>Total pengeluaran</span></div><div class="cd kp"><b>${f(i-o)}</b><span>Saldo kas</span></div></div>`}
+function kpx(){const k=KP.find(x=>'kpiict_'+slug(x[0])==L.id);return k?`<div class="cd" style="border-left:5px solid var(--ac)"><b>Tugas Pokok & Fungsi (Tupoksi)</b><p>${e(k[1])}</p></div>`:''}
+function mkh(){return`<div class="cd"><b>Menu Kustom</b><p class="mu">Tambah menu baru (tabel data lengkap dengan tambah, edit, impor, export).</p><div class="tb"><input id="m_t" placeholder="Nama menu"><input id="m_i" placeholder="Ikon (emoji)" style="max-width:120px"></div><div class="fl"><input id="m_f" placeholder="Kolom: tanggal:date,judul,status:select(Baru|Selesai)"></div><p class="mu">Tipe kolom: text, date, time, month, number, url, area, select(a|b), user, img.</p><button onclick="addM()">Tambah Menu</button>${CM().map((c,i)=>`<div class="tb"><span style="flex:1">${c.ic||'📁'} ${e(c.t)}</span><button class="s g" onclick="delM(${i})">Hapus</button></div>`).join('')}</div>`}
+function addM(){const t=$('#m_t').value.trim();if(!t)return alert('Isi nama menu');const a=CM();a.push({id:'cm_'+slug(t)+uid().slice(0,3),t,ic:$('#m_i').value.trim()||'📁',f:$('#m_f').value.trim()||'tanggal:date,judul,keterangan:area'});LS.s('cmenu',a);syncCM();shell();go('set')}
+function delM(i){if(!confirm('Hapus menu ini dari navigasi?'))return;const a=CM();a.splice(i,1);LS.s('cmenu',a);syncCM();shell();go('set')}
+function chat(){const rooms=['Grup Umum','Grup Manajemen',...users.filter(u=>u.id!=me.id).map(u=>u.nama)];window.rm=window.rm||rooms[0];const key=r=>r.startsWith('Grup')?r:[me.nama,r].sort().join('|'),ms=LS.g('chat',[]).filter(m=>m.r==key(rm));
+$('#pg').innerHTML=`<h2>Chat Personal & Grup</h2><div class="cd"><select onchange="rm=this.value;chat()">${rooms.map(r=>`<option ${r==rm?'selected':''}>${e(r)}</option>`).join('')}</select><div class="ch" id="chb">${ms.map(m=>`<div class="ms ${m.f==me.nama?'me':''}"><small>${e(m.f)}</small><br>${e(m.x)}</div>`).join('')||'<span class="mu">Belum ada pesan.</span>'}</div><div class="tb"><input id="cm" placeholder="Tulis pesan…" onkeydown="if(event.key=='Enter')snd()"><button onclick="snd()">Kirim</button></div><p class="mu">Catatan: pesan tersimpan di perangkat ini (belum real-time lintas perangkat).</p></div>`;const b=$('#chb');b.scrollTop=b.scrollHeight;window.snd=()=>{const x=$('#cm').value.trim();if(!x)return;const a=LS.g('chat',[]);a.push({r:key(rm),f:me.nama,x});LS.s('chat',a);chat()}}
+function sett(){$('#pg').innerHTML=`<h2>Setting General</h2><div class="cd"><div class="fl"><label>Nama aplikasi</label><input id="s_n" value="${e(cfg.name)}"></div><div class="fl"><label>Warna dashboard</label><input id="s_c" type="color" value="${cfg.color}"></div><div class="tb"><small class="mu">Preset unit:</small><button class="s" style="background:#0c5b5b;color:#fff" onclick="$('#s_c').value='#0c5b5b'">SIT</button><button class="s" style="background:#ffa500;color:#1b2430" onclick="$('#s_c').value='#ffa500'">TK</button><button class="s" style="background:#86bd17;color:#1b2430" onclick="$('#s_c').value='#86bd17'">SD</button><button class="s" style="background:#78b9fa;color:#1b2430" onclick="$('#s_c').value='#78b9fa'">SMP</button></div><div class="fl"><label>Logo</label><input id="s_l" type="file" accept="image/*"></div><div class="tb"><div class="fl" style="flex:1"><label>Jam masuk</label><input id="s_i" type="time" value="${cfg.in}"></div><div class="fl" style="flex:1"><label>Jam pulang</label><input id="s_o" type="time" value="${cfg.out}"></div></div><label><input type="checkbox" id="s_w" style="width:auto" ${cfg.wa?'checked':''}> Aktifkan pemberitahuan WhatsApp (nomor diisi di Data Profile tiap pegawai)</label><p><button onclick="svS()">Simpan</button> <button class="g" onclick="go('profil')">Kelola User</button></p></div>${mkh()}`}
+function svS(){const f=$('#s_l').files[0],fin=()=>{cfg={...cfg,name:$('#s_n').value,color:$('#s_c').value,in:$('#s_i').value,out:$('#s_o').value,wa:$('#s_w').checked};LS.s('cfg',cfg);theme();shell();go('set')};if(f){const r=new FileReader();r.onload=()=>{cfg.logo=r.result;fin()};r.readAsDataURL(f)}else fin()}
+if(cfg.color=='#0f766e')cfg.color='#0c5b5b';theme();const sid=LS.g('me',null);me=users.find(u=>u.id==sid);!users.length?auth('setup'):me?shell():auth('login');
+</script></body></html>
