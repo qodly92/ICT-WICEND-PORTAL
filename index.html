@@ -37,7 +37,7 @@ input,select,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1
 <script>
 const $=s=>document.querySelector(s),e=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 /* ===== KONFIGURASI SUPABASE (isi dari Project Settings > API) ===== */
-const SUPABASE_URL='https://GANTI-PROJECT-ID.supabase.co',SUPABASE_ANON_KEY='GANTI-ANON-PUBLIC-KEY',DOM='@ict.local';
+const SUPABASE_URL='https://lfvqjqnhrbvtlmjnlgxg.supabase.co',SUPABASE_ANON_KEY='sb_publishable_BLG77wsLYhetdWIWco7cJQ_-FvgeFMl',DOM='@ict.local';
 const SB=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY),mem={},snap={};let _t,ch_;
 const mk_=a=>new Map(a.map(r=>[String(r.id),JSON.stringify(r)]));
 async function sync(k,n){try{if(Array.isArray(n)){const om=snap[k]||new Map(),nm=mk_(n),up=[],ins=[],del=[];n.forEach(r=>{const id=String(r.id),o=om.get(id);if(o===undefined)ins.push({collection:k,id,data:r});else if(o!==nm.get(id))up.push({collection:k,id,data:r})});om.forEach((v,i)=>{if(!nm.has(i))del.push(i)});snap[k]=nm;if(ins.length){const{error}=await SB.from('records').insert(ins);if(error)throw error}for(const u of up){const{error}=await SB.from('records').update({data:u.data}).eq('collection',k).eq('id',u.id);if(error)throw error}for(const i of del){const{error}=await SB.from('records').delete().eq('collection',k).eq('id',i);if(error)throw error}}else{snap[k]=JSON.stringify(n);const{error}=await SB.from('records').upsert({collection:k,id:'_',data:n});if(error)throw error}}catch(x){alert('Gagal menyimpan ke server: '+(x.message||x));await load();go(cur)}}
