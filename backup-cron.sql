@@ -18,3 +18,8 @@ select cron.schedule('ict-clean-notif', '0 18 * * *', $$
 $$);
 
 -- Menghentikan jadwal: select cron.unschedule('ict-backup-drive');
+
+-- Bersihkan Log Aktivitas lebih dari 90 hari: 01.30 WIB
+select cron.schedule('ict-clean-log', '30 18 * * *', $$
+  delete from public.records where collection='d_log' and updated_at < now() - interval '90 days'
+$$);
