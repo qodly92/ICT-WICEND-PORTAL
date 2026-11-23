@@ -1,0 +1,42 @@
+<!doctype html><html lang="id"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wicend Twibbon</title><style>*{box-sizing:border-box}body{margin:0;background:#eff6ff;color:#172554;font:16px system-ui}main{max-width:760px;margin:auto;padding:24px}section{background:white;padding:20px;border-radius:16px}label{display:block;margin:12px 0}input,select,button{font:inherit;max-width:100%}canvas{width:min(100%,480px);display:block}button{padding:8px}</style><main><a href="./aplikasi-wicend.html">← Aplikasi Wicend</a><h1>Wicend Twibbon</h1><p>Unduh PNG 1080 × 1080 gratis tanpa watermark tambahan.</p><p id="status" role="status"></p><section id="auth" hidden><form id="account"><label>Email <input id="email" type="email" autocomplete="email" required></label><label>Kata sandi <input id="pw" type="password" autocomplete="current-password" minlength="8" required></label><button value="login">Masuk</button> <button value="signup">Daftar gratis</button></form></section><section id="studio" hidden><button id="logout">Keluar</button><p>Foto dan bingkai diproses di perangkat Anda.</p><canvas id="preview" width="1080" height="1080" aria-label="Pratinjau twibbon"></canvas><label>Foto <input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label><label>Bingkai <select id="theme"><option value="#1e3a8a">Semangat Wicend · Biru</option><option value="#065f46">Semangat Wicend · Hijau</option></select></label><label>Bingkai PNG transparan sendiri <input id="frame" type="file" accept="image/png"></label><button id="reset">Gunakan bingkai bawaan</button><label>Perbesaran <input id="zoom" type="range" min="1" max="4" step="0.01" value="1"></label><label>Posisi horizontal <input id="x" type="range" min="-100" max="100" value="0"></label><label>Posisi vertikal <input id="y" type="range" min="-100" max="100" value="0"></label><button id="save" disabled>Unduh PNG</button></section></main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="wicend-twibbon-config.js"></script><script>
+'use strict';
+const el=id=>document.getElementById(id), note=text=>{el('status').textContent=text}, cv=el('preview'), ctx=cv.getContext('2d'), n=cv.width;
+const images={photo:null,frame:null}, revision={photo:0,frame:0};
+let active=false;
+function draw(){
+ ctx.fillStyle='#dbeafe';ctx.fillRect(0,0,n,n);
+ const p=images.photo;
+ if(p){const s=Math.max(n/p.width,n/p.height)*Number(el('zoom').value), w=p.width*s,h=p.height*s;ctx.drawImage(p,(n-w)/2+(w-n)*Number(el('x').value)/200,(n-h)/2+(h-n)*Number(el('y').value)/200,w,h)}
+ if(images.frame)ctx.drawImage(images.frame,0,0,n,n);
+ else{ctx.strokeStyle=ctx.fillStyle=el('theme').value;ctx.lineWidth=44;ctx.strokeRect(22,22,n-44,n-44);ctx.beginPath();ctx.moveTo(0,890);ctx.lineTo(n,965);ctx.lineTo(n,n);ctx.lineTo(0,n);ctx.fill();ctx.fillStyle='white';ctx.font='bold 52px system-ui';ctx.fillText('SEMANGAT WICEND',70,1020)}
+ el('save').disabled=!active||!p;
+}
+const reset=id=>{++revision[id];images[id]=null;el(id).value=''};
+el('reset').onclick=()=>{reset('frame');draw()};
+for(const id of ['theme','zoom','x','y'])el(id).oninput=draw;
+for(const id of ['photo','frame'])el(id).onchange=async()=>{
+ const file=el(id).files[0];if(!file)return;const version=++revision[id];let url;
+ try{
+  const types=id==='frame'?['image/png']:['image/png','image/jpeg','image/webp'];
+  if(!types.includes(file.type)||file.size>15*1024*1024)throw new Error('Periksa format gambar dan ukuran maksimal 15 MB.');
+  url=URL.createObjectURL(file);const image=new Image();image.src=url;await image.decode();
+  if(!active||version!==revision[id])return;
+  if(id==='frame'&&image.width!==image.height)throw new Error('Bingkai PNG harus persegi.');
+  images[id]=image;if(id==='photo'){el('zoom').value=1;el('x').value=0;el('y').value=0}note('');draw();
+ }catch(e){if(active&&version===revision[id]){el(id).value='';note(e.message)}}finally{if(url)URL.revokeObjectURL(url)}
+};
+el('save').onclick=()=>{if(!active||!images.photo)return;cv.toBlob(blob=>{if(!blob||!active)return;const a=document.createElement('a'), url=URL.createObjectURL(blob);a.href=url;a.download='wicend-twibbon.png';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)},'image/png')};
+const config=window.WICEND_TWIBBON;
+if(!config?.url||!config?.key||!window.supabase)note('Pendaftaran belum tersedia. Admin perlu menyiapkan konfigurasi Wicend Twibbon.');
+else{
+ const sb=window.supabase.createClient(config.url,config.key,{auth:{storageKey:'wicend-twibbon-auth'}});
+ sb.auth.onAuthStateChange((_event,session)=>{active=!!session;el('studio').hidden=!active;el('auth').hidden=active;if(!active){reset('photo');reset('frame')}draw()});
+ el('account').onsubmit=async event=>{
+  event.preventDefault();const buttons=[...el('account').querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);
+  const email=el('email').value.trim(), password=el('pw').value;
+  try{note('Memproses…');const {data,error}=event.submitter?.value==='signup'?await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}}):await sb.auth.signInWithPassword({email,password});if(error)throw error;el('pw').value='';note(data.session?'Anda sudah masuk.':'Jika pendaftaran berhasil, cek email untuk mengonfirmasi akun.')}
+  catch(e){note(e.message||'Tidak dapat memproses permintaan.')}finally{buttons.forEach(b=>b.disabled=false)}
+ };
+ el('logout').onclick=async()=>{try{const {error}=await sb.auth.signOut({scope:'local'});if(error)throw error;note('Anda sudah keluar.')}catch(e){note(e.message)}};
+}
+</script></html>
