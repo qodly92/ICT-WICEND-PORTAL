@@ -1,0 +1,136 @@
+:root {
+  --pt-primary: #6245a2;
+  --pt-accent: #f6d8ab;
+  --pt-bg: #f7f3fc;
+  --pt-surface: #fffdff;
+  --pt-text: #302544;
+  --pt-muted: #655970;
+  --pt-border: #e3d9ee;
+  --pt-soft: #eee5fa;
+  --pt-radius: 16px;
+  --pt-shadow: 0 5px 16px #33204412;
+  --pt-icon-shadow: 0 3px 0 #39214c26, 0 5px 9px #39214c20, inset 0 1px 2px #fff;
+  --pt-wash: radial-gradient(ellipse at top right, color-mix(in srgb, var(--pt-soft), transparent 20%), transparent 58%);
+  --pt-nav-wash: linear-gradient(155deg, var(--pt-surface), var(--pt-soft), color-mix(in srgb, var(--pt-accent), var(--pt-surface) 74%));
+}
+
+/* Bridge legacy variables on the portal, including those set on the root by theme(). */
+body:has(.app), .app {
+  --bg: var(--pt-bg);
+  --cd: var(--pt-surface);
+  --tx: var(--pt-text);
+  --mu: var(--pt-muted);
+  --bd: var(--pt-border);
+  --pr: var(--pt-primary);
+  --tl: var(--pt-primary);
+  --ac: var(--pt-accent);
+  --on: #fff;
+  background-color: var(--pt-bg);
+  color: var(--pt-text);
+  color-scheme: light;
+}
+
+.app .main, .app:has(.dash-hero) .main {
+  background: var(--pt-wash) var(--pt-bg);
+}
+.app .side, .app:has(.dash-hero) .side {
+  background: var(--pt-nav-wash) var(--pt-soft);
+  color: var(--pt-text);
+  border-inline-end: 1px solid var(--pt-border);
+}
+.app .side :is(.gl,.nh) { color: var(--pt-muted); opacity: 1; }
+.app .side .nv { border-radius: min(var(--pt-radius), 12px); }
+.app .side .nv:hover, .app:has(.dash-hero) .side .nv:hover {
+  background: var(--pt-soft);
+  color: var(--pt-text);
+}
+.app .side .nv.on, .app:has(.dash-hero) .side .nv.on {
+  background: color-mix(in srgb, var(--pt-primary) 16%, var(--pt-surface));
+  color: var(--pt-text);
+  box-shadow: inset 3px 0 var(--pt-primary);
+}
+.app .side :is(.nv,.nh) { --pt-icon-tint: var(--pt-soft); }
+.app .side :is(.nv,.nh):nth-child(3n+2) { --pt-icon-tint: var(--pt-accent); }
+.app .side :is(.nv,.nh):nth-child(3n+3) { --pt-icon-tint: #d3eee6; }
+.app .side .ic {
+  background: var(--pt-icon-tint, var(--pt-soft));
+  background-image: linear-gradient(145deg, #ffffffed, #ffffff00 68%, #39214c18);
+  box-shadow: var(--pt-icon-shadow);
+  transition: transform .15s ease;
+}
+.app .side :is(.brand img,.lg), .app .dash-icon, .app .wc-icon { box-shadow: var(--pt-icon-shadow); }
+
+.app :is(.top,.cd,.pkw,.sg-page .sg-nav,.wc-card,.wc-editor),
+body:has(.app) :is(.md,dialog) {
+  border-radius: var(--pt-radius);
+  box-shadow: var(--pt-shadow);
+}
+.app .top { border-bottom-color: var(--pt-accent); }
+.app .sg-page .sg-nav a:is(:hover,:focus-visible) { background: var(--pt-soft); }
+.app :is(.tg,.bell,.wc-icon) { background-color: var(--pt-soft); }
+.app .ms:not(.me,.stk) { background: var(--pt-soft); }
+.app .pk .gh td { background: var(--pt-soft); color: var(--pt-text); }
+.app th { background: var(--pt-soft); color: var(--pt-text); }
+.app .tw tbody tr:hover > td:not([style]) {
+  background-color: color-mix(in srgb, var(--pt-soft) 48%, transparent);
+}
+body:has(.app) .ov { background: #2b1c435e; }
+body:has(.app) :is(.md,dialog) {
+  background: var(--pt-surface);
+  color: var(--pt-text);
+  border: 1px solid var(--pt-border);
+}
+body:has(.app) dialog::backdrop { background: #2b1c435e; }
+body:has(.app) :is(button,.bt) { border-radius: min(var(--pt-radius), 10px); }
+body:has(.app) :is(input,select,textarea):not(.pk *, .isel) {
+  border-radius: min(var(--pt-radius), 10px);
+  accent-color: var(--pt-primary);
+}
+body:has(.app) :is(button,.bt,a,input,select,textarea,.nh):focus-visible {
+  outline: 2px solid var(--pt-primary);
+  outline-offset: 2px;
+}
+
+.app .dash-hero {
+  border-radius: calc(var(--pt-radius) + 8px);
+  background: var(--pt-nav-wash) var(--pt-soft);
+  border: 1px solid var(--pt-border);
+  color: var(--pt-text);
+  box-shadow: var(--pt-shadow);
+}
+.app .dash-hero small { color: var(--pt-muted); }
+.app :is(.dash-cta,.dash-icon) { background: var(--pt-primary); color: var(--on); }
+.app .dash-cta { box-shadow: var(--pt-shadow); }
+.app .dash-metrics .dash-metric {
+  background: linear-gradient(135deg, var(--pt-surface), var(--pt-soft));
+  color: var(--pt-text);
+}
+.app .dash-metrics .dash-metric:nth-child(even) {
+  background: linear-gradient(135deg, var(--pt-surface), color-mix(in srgb, var(--pt-accent) 32%, var(--pt-surface)));
+}
+/* Provide --pt-image: url(...) to replace the bundled illustration. */
+.app .dash-studio img {
+  content: var(--pt-image, normal);
+  object-fit: contain;
+  filter: var(--pt-art-filter, drop-shadow(0 12px 15px #63448728));
+}
+[data-pt-image='off'] .dash-hero { grid-template-columns: minmax(0, 1fr); }
+[data-pt-image='off'] .dash-studio { display: none; }
+
+[data-pt-ornament='off'] { --pt-wash: none; --pt-nav-wash: none; }
+[data-pt-ornament='off'] .app :is(.dash-studio,.dash-metric)::before,
+[data-pt-ornament='off'] .app :is(.dash-studio,.dash-metric)::after,
+.app[data-pt-ornament='off'] :is(.dash-studio,.dash-metric)::before,
+.app[data-pt-ornament='off'] :is(.dash-studio,.dash-metric)::after { content: none; }
+:where([data-pt-ornament='off']) .app .dash-metrics .dash-metric:nth-child(n),
+.app[data-pt-ornament='off'] .dash-metrics .dash-metric:nth-child(n) { background: var(--pt-surface); }
+[data-pt-depth='off'] { --pt-shadow: none; --pt-icon-shadow: none; --pt-art-filter: none; }
+:where([data-pt-depth='off']) .app .side :is(.nv,.nh):hover .ic,
+.app[data-pt-depth='off'] .side :is(.nv,.nh):hover .ic { transform: none; }
+[data-pt-depth='off'] .side .ic,
+[data-pt-ornament='off'] .side .ic { background-image: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app .side :is(.nv,.nh) .ic { transition: none; }
+  .app .side :is(.nv,.nh):hover .ic { transform: none; }
+}

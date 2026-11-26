@@ -77,6 +77,7 @@
   Chart.register({
     id: 'chartDepth',
     beforeDatasetsDraw(chart) {
+      if (document.documentElement.dataset.ptDepth === 'off') return;
       const { ctx, chartArea } = chart;
       if (!chartArea || chartArea.width <= 0 || chartArea.height <= 0) return;
       const metas = chart.getSortedVisibleDatasetMetas();
